@@ -96,7 +96,7 @@ int main()
 
 // Predicates
 // Predicates return true to a common test. The reason to do it as a function
-// is that it always you to add and subtract things in the function, and
+// is that you can to add and subtract things in one place, and
 // change the functionality throughout the program.
 bool isNote(char x)
 {
@@ -126,7 +126,7 @@ void consume(char token, string& target)
     // Ex.: firstName = "Emmanuel";
     //      cout << firstName.substr(2, 3);
     // -> man
-    
+
     // When you leave off the second number, it just returns everything to the
     // end of the string. In this case we are snipping off the first character.
 	target = target.substr(1);
@@ -185,7 +185,7 @@ float translateDuration(string& ABCDur)
                            // Note that this only converts 0-9.
                            // If the duration is 13, we have a problem.
 		consume(token, ABCDur);
-		// now we have to check if the number is followed by a slash.
+		// Now we have to check if the number is followed by a slash.
 		dur = parseFraction(ABCDur, dur);
 	}
 
@@ -194,7 +194,8 @@ float translateDuration(string& ABCDur)
 }
 
 
-// For cases like 'C3/2'.
+// For cases like 'C3/2'. This function expects the 'C3' to already be consumed.
+// The very first character should be a /. Otherwise, it is not a fraction.
 float parseFraction(string& ABCString, float dur)
 {
 	float denominator;
