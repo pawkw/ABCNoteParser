@@ -8,4 +8,4 @@ It requires the Sox play command. For Windows, you will have to go with the olde
 - Paste it in the same directory.
 - Rename the copy to "play".
 
-If you are using Visual Studio, uncomment lines 4 and 76.
+If you are using Visual Studio, uncomment lines 4 and 93.

@@ -9,9 +9,17 @@
 
 using namespace std;
 
+// Constants
+// We can change this here, and it is changed through the whole program.
 const float NOTE_DURATION = 0.25;
 const string INSTRUMENT = "triangle";
 
+// Function declarations.
+// The C++ compiler needs to know the "signatures" for the functions so it can
+// make sure that you are calling them correctly.
+// I like to put the function definitions after the main function so you can
+// read it first rather than scrolling to the bottom and then scrolling up.
+// It is purely aesthetic.
 bool isNote(char x);
 bool isDecoration(char x);
 string translateNote(string& ABCNote);
@@ -28,34 +36,43 @@ int main()
 	// string song = "CEG[C4E4G4]";
 	string song = "|: [c4a4] [B4g4]|efed c2cd|e2f2 gaba|g2e2 e2fg| \
 		a4 g4 | efed cdef | g2d2 efed | c2A2 A4 :|";
+    // song is "consumed" as it is played. We look at the first character
+    // and parse it. Once we successfully parse the character, it is snipped
+    // off. This means we are always looking at the first character.
+    // Look at the consume function to see how this is done.
+
 	stringstream cmd;
 
 	while(song.length() > 0)
 	{
-		char token = song.at(0);
 		string note = "";
 		float dur = 0.0;
+        char token = song.at(0);
 
-		if (isNote(token))
+		if (isNote(token)) // Parse a single note.
 		{
 			note = translateNote(song);
 			dur = translateDuration(song);
 			cout << "Note: " << note << " " << (dur * NOTE_DURATION) << "ms." << endl;
 		}
-		else if (token == 'z' || token == 'Z')
+		else if (token == 'z' || token == 'Z') // Parse a rest.
 		{
+            // This could have been a function, but it is so simple that
+            // I did the work here.
 			note = "z";
 			consume(token, song);
 			dur = translateDuration(song);
 			cout << "Rest " << (dur * NOTE_DURATION) << "ms." << endl;
 		}
-		else if (token == '[')
+		else if (token == '[') // Parse a chord.
 		{
 			parseChord(song, note, dur);
 			cout << "Chord: " << note << " " << (dur * NOTE_DURATION) << "ms." << endl;
 		}
 		else if (isDecoration(token))
 		{
+            // Same thing as rest. It is simple enough to take care of
+            // without a function.
 			cout << "Decoration: " << token << endl;
 			consume(token, song);
 			continue;
@@ -78,6 +95,9 @@ int main()
 }
 
 // Predicates
+// Predicates return true to a common test. The reason to do it as a function
+// is that it always you to add and subtract things in the function, and
+// change the functionality throughout the program.
 bool isNote(char x)
 {
 	return (x >= 'a' && x <= 'g') || (x >= 'A' && x <= 'G');
@@ -89,36 +109,53 @@ bool isDecoration(char x)
 }
 
 // Helper function
-
+// Here I used the & character to say that I am going to change the original
+// variable directly. It is NOT a local variable, it is refering to the variable
+// that was passed. This is called "pass by reference".
 void consume(char token, string& target)
 {
-	if (target.at(0) != token)
+	if (target.at(0) != token) // A serious error.
 	{
 		cout << "ERROR: Expected '" << token << "'. Found '" << target.at(0) << "'." << endl << endl;
 		system("pause");
 		exit(1);
 	}
 
+    // substr is short for "substring". It is used to create a snippet of the
+    // original string. Usually you would say where to begin and how far to go.
+    // Ex.: firstName = "Emmanuel";
+    //      cout << firstName.substr(2, 3);
+    // -> man
+    
+    // When you leave off the second number, it just returns everything to the
+    // end of the string. In this case we are snipping off the first character.
 	target = target.substr(1);
 }
 
 // Regular functions
 
+// ABCNote is a reference. Since we are passing the string song, ABCNote is
+// actually song, not a local variable.
 string translateNote(string& ABCNote) {
 	stringstream noteStream;
-	char token = ' ';
 
 	if (ABCNote.length() < 1)
-		return "EOS";
+		return "EOS";  // This should not happen. If it does, it will cause
+                       // the play command to fail.
 
-	token = ABCNote.at(0);
+	char token = ABCNote.at(0);
 
 	if (token >= 'a' && token <= 'g')
 		noteStream << (char)(token&95) << "5"; // Convert to uppercase.
+                                               // An example of bitwise math.
 	else if (token >= 'A' && token <= 'G')
 		noteStream << token << "4";
 	else
-		noteStream << "Error";
+    {
+        // This should never happen.
+        consume(token, ABCNote);
+		return "Error";
+    }
 
 	consume(token, ABCNote);
 
@@ -144,13 +181,15 @@ float translateDuration(string& ABCDur)
 	}
 	else if (token >= '0' && token <= '9')
 	{
-		dur = token - '0';
+		dur = token - '0'; // Convert the token to an integer.
+                           // Note that this only converts 0-9.
+                           // If the duration is 13, we have a problem.
 		consume(token, ABCDur);
 		// now we have to check if the number is followed by a slash.
 		dur = parseFraction(ABCDur, dur);
 	}
 
-	dur = translateTie(ABCDur, dur);
+	dur = translateTie(ABCDur, dur); // Take care of ties.
 	return dur;
 }
 
@@ -166,7 +205,8 @@ float parseFraction(string& ABCString, float dur)
 
 	token = ABCString.at(0);
 
-	if (token != '/')
+	if (token != '/') // When possible, you should test to see if there is
+                      // nothing to do first in a function.
 		return dur; // There is no modifier, the duration is * 1.
 
 	consume('/', ABCString); // Consume the /.
@@ -193,7 +233,7 @@ float translateTie(string& ABCString, float dur)
 
 	token = ABCString.at(0);
 
-	if (token != '-')
+	if (token != '-') // There is nothing to do.
 		return dur; // It is not a tie.
 
 	cout << "Parsed a tie" << endl;
@@ -205,7 +245,8 @@ float translateTie(string& ABCString, float dur)
 		consume('|', ABCString); // Consume the |.
 		token = ABCString.at(0); // Get the next token.
 	}
-	consume(token, ABCString); // Consume the note. We are going to assume it is the same note."
+	consume(token, ABCString); // Consume the note. We are going to assume it
+                               // is the same note.
 
 	return translateDuration(ABCString) + dur;
 }
@@ -216,12 +257,13 @@ void parseChord(string& song, string& note, float& duration)
 
 	char token = song.at(0);
 
-	while (isNote(token))
+	while (isNote(token)) // This will stop parsing if there is no note.
 	{
 		note += translateNote(song) + " ";
-		duration = translateDuration(song); // The previous duration is discarded. Only the last duration is kept.
+		duration = translateDuration(song); // The previous duration is
+                                            // discarded. Only the last is kept.
 		token = song.at(0);
 	}
-	note += " remix -";
+	note += " remix -"; // This cause the play command to play a chord.
 	consume(']', song); // This will stop the program if the chord is malformed.
 }
